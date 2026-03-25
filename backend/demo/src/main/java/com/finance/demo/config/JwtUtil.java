@@ -13,7 +13,7 @@ public class JwtUtil {
 
     private final String SECRET_KEY = "mysecretkey";
 
-    // 🔐 Generate Token
+    //  Generate Token
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
@@ -27,12 +27,12 @@ public class JwtUtil {
         return extractUsername(token);
     }
 
-    // 🔍 Extract Username (EMAIL)
+    // Extract Username (EMAIL)
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
 
-    // 🔍 Extract Claims
+    //  Extract Claims
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(SECRET_KEY)
@@ -40,13 +40,13 @@ public class JwtUtil {
                 .getBody();
     }
 
-    // ✅ Validate Token
+    //  Validate Token
     public boolean validateToken(String token, String email) {
         final String extractedEmail = extractUsername(token);
         return (extractedEmail.equals(email) && !isTokenExpired(token));
     }
 
-    // ⏰ Check Expiry
+    //  Check Expiry
     private boolean isTokenExpired(String token) {
         return extractAllClaims(token).getExpiration().before(new Date());
     }

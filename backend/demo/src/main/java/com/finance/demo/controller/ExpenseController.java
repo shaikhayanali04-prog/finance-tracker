@@ -1,19 +1,27 @@
 package com.finance.demo.controller;
 
-import com.finance.demo.dto.*;
-import com.finance.demo.model.*;
-import com.finance.demo.repository.UserRepository;
-import com.finance.demo.service.ExpenseService;
-import com.finance.demo.config.JwtUtil;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.finance.demo.config.JwtUtil;
+import com.finance.demo.dto.ExpenseRequest;
+import com.finance.demo.dto.ExpenseResponse;
+import com.finance.demo.model.Expense;
+import com.finance.demo.model.User;
+import com.finance.demo.repository.UserRepository;
+import com.finance.demo.service.ExpenseService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/expenses")
@@ -37,7 +45,7 @@ public class ExpenseController {
         return userRepository.findByEmail(email).orElseThrow();
     }
 
-    // ✅ ADD EXPENSE
+    //  ADD EXPENSE
     @PostMapping
     public ExpenseResponse addExpense(@Valid @RequestBody ExpenseRequest req,
                                      HttpServletRequest request) {
@@ -62,7 +70,7 @@ public class ExpenseController {
         );
     }
 
-    // ✅ GET EXPENSES
+    //  GET EXPENSES
     @GetMapping
     public List<ExpenseResponse> getExpenses(HttpServletRequest request) {
 
@@ -80,7 +88,7 @@ public class ExpenseController {
                 .collect(Collectors.toList());
     }
 
-    // ✅ DELETE
+    //  DELETE
     @DeleteMapping("/{id}")
     public String deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);

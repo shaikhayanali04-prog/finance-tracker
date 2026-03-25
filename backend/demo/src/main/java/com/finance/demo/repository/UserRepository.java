@@ -1,11 +1,11 @@
 package com.finance.demo.repository;
 
-import com.finance.demo.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
 
-    Optional<User> findByEmail(String email); // ✅ ONLY ONE
+import com.finance.demo.model.User;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
 }

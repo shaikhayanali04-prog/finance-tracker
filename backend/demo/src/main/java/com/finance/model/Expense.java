@@ -22,7 +22,7 @@ public class Expense {
     private String description;
     private LocalDate date;
 
-    // 🔥 ADD THIS
+    //  ADD THIS
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -45,7 +45,7 @@ public class Expense {
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
 
-    // 🔥 ADD THESE
+    //  ADD THESE
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }

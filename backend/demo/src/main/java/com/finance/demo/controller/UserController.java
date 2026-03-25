@@ -1,9 +1,7 @@
 package com.finance.demo.controller;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,67 +10,51 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finance.demo.config.JwtUtil;
 import com.finance.demo.model.User;
 import com.finance.demo.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin("*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder encoder;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    // ✅ REGISTER USER
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public ResponseEntity<?> register(@RequestBody User user) {
+
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+
+        user.setPassword(encoder.encode(user.getPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok("User registered successfully");
     }
 
-    // ✅ LOGIN USER
     @PostMapping("/login")
-    public String login(@RequestBody User user) {
+    public ResponseEntity<?> login(@RequestBody User loginUser) {
 
-        Optional<User> existingUserOpt = userRepository.findByEmail(user.getEmail());
+        User user = userRepository.findByEmail(loginUser.getEmail()).orElse(null);
 
-        if (existingUserOpt.isEmpty()) {
-            return "User not found ❌";
+        if (user == null) {
+            return ResponseEntity.badRequest().body("User not found");
         }
 
-        User existingUser = existingUserOpt.get();
-
-        if (!passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
-            return "Invalid password ❌";
+        if (!encoder.matches(loginUser.getPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest().body("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
-
-        return "Login successful ✅ Token: " + token;
+        return ResponseEntity.ok("Login successful");
     }
 
-    // ✅ GET ALL USERS
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        return userRepository.findAll();
-    }
-
-    // ✅ TEST PROTECTED ROUTE
-    @GetMapping("/secure")
-    public String secure() {
-        return "You are authenticated ✅";
-    }
-
-    // ✅ TEST PUBLIC ROUTE
     @GetMapping("/test")
     public String test() {
-        return "API Working ✅";
+        return "Backend working fine";
     }
 }
