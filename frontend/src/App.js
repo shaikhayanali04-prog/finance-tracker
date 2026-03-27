@@ -1,8 +1,19 @@
-import './App.css';
-import Login from './pages/Login';
+import { useState } from "react";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
-  return <Login />;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return (
+    <>
+      {isLoggedIn ? (
+        <Dashboard />
+      ) : (
+        <Login setIsLoggedIn={setIsLoggedIn} />
+      )}
+    </>
+  );
 }
 
 export default App;
