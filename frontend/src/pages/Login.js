@@ -16,15 +16,15 @@ const Login = ({ setIsLoggedIn }) => {
             <span className="material-symbols-outlined text-white fill">account_balance_wallet</span>
           </div>
           <span className="font-bold text-xl tracking-tight text-[#2C3E50]">
-            Sovereign Vault
+            Trakify
           </span>
         </div>
 
         <div className="hidden md:flex gap-6">
-          <a href="#" className="text-gray-500 font-medium hover:text-teal-500 transition-colors text-sm">
+          <a href="/help" className="text-gray-500 font-medium hover:text-teal-500 transition-colors text-sm">
             Help Center
           </a>
-          <a href="#" className="text-gray-500 font-medium hover:text-teal-500 transition-colors text-sm">
+          <a href="/security" className="text-gray-500 font-medium hover:text-teal-500 transition-colors text-sm">
             Security
           </a>
         </div>
@@ -44,10 +44,10 @@ const Login = ({ setIsLoggedIn }) => {
             </div>
 
             <form
-  className="space-y-6"
-  onSubmit={(e) => {
-    e.preventDefault();
-    setIsLoggedIn(true);
+              className="space-y-6"
+              onSubmit={(e) => {
+              e.preventDefault();
+              setIsLoggedIn(true);
   }}
 >
               {/* Email */}
@@ -75,7 +75,7 @@ const Login = ({ setIsLoggedIn }) => {
                     Password
                   </label>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="text-[10px] font-bold tracking-widest text-teal-500 uppercase hover:opacity-80 transition-opacity"
                   >
                     Forgot?
@@ -87,7 +87,7 @@ const Login = ({ setIsLoggedIn }) => {
                   </span>
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="********"
                     required
                     className="w-full pl-12 pr-12 py-4 bg-gray-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all placeholder:text-gray-400"
                   />
@@ -118,7 +118,7 @@ const Login = ({ setIsLoggedIn }) => {
               <p className="text-gray-500 text-sm">
                 New to the vault?{" "}
                 <a
-                  href="#"
+                  href="/signup"
                   className="text-[#2C3E50] font-bold hover:text-teal-500 transition-colors underline underline-offset-4 decoration-teal-300/30"
                 >
                   Create an account
@@ -178,7 +178,7 @@ const Login = ({ setIsLoggedIn }) => {
           <div className="mt-6 pl-4 border-l border-teal-300/20">
             <p className="text-gray-500 text-xs italic leading-relaxed">
               "Control over one's financial destiny is the ultimate luxury.
-              Sovereign Vault provides the clarity required for decisive action."
+              Trakify Vault provides the clarity required for decisive action."
             </p>
           </div>
         </aside>
@@ -187,16 +187,16 @@ const Login = ({ setIsLoggedIn }) => {
       {/* Footer */}
       <footer className="fixed bottom-0 w-full flex justify-center gap-8 py-6 px-4 flex-wrap bg-transparent">
         <span className="text-xs tracking-wide uppercase text-gray-500">
-          © 2024 Sovereign Vault. All rights reserved.
+          (c) 2024 Sovereign Vault. All rights reserved.
         </span>
         <div className="flex gap-4">
-          <a href="#" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
+          <a href="/privacy" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
             Privacy Policy
           </a>
-          <a href="#" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
+          <a href="/terms" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
             Terms of Service
           </a>
-          <a href="#" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
+          <a href="/security" className="text-xs tracking-wide uppercase text-gray-400 hover:text-teal-500 transition-colors hover:underline">
             Security
           </a>
         </div>

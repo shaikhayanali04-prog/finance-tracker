@@ -1,17 +1,29 @@
 package com.finance.demo.config;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
 
-    private final String SECRET_KEY = "mysecretkey";
+    private final SecretKey signingKey;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        Assert.hasText(secret, "JWT secret must be provided");
+        Assert.isTrue(secret.length() >= 32, "JWT secret must be at least 32 characters for HS256");
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     //  Generate Token
     public String generateToken(String email) {
@@ -19,7 +31,7 @@ public class JwtUtil {
                 .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -34,8 +46,9 @@ public class JwtUtil {
 
     //  Extract Claims
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
+        return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

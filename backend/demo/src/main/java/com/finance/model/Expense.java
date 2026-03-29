@@ -1,4 +1,4 @@
-package com.finance.demo.model;
+package com.finance.model;
 import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
