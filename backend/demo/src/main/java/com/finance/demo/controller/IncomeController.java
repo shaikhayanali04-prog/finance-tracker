@@ -18,31 +18,31 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.finance.demo.config.JwtUtil;
-import com.finance.demo.dto.ExpenseRequest;
-import com.finance.demo.dto.ExpenseResponse;
-import com.finance.demo.model.Expense;
+import com.finance.demo.dto.IncomeRequest;
+import com.finance.demo.dto.IncomeResponse;
+import com.finance.demo.model.Income;
 import com.finance.demo.model.User;
 import com.finance.demo.repository.UserRepository;
-import com.finance.demo.service.ExpenseService;
+import com.finance.demo.service.IncomeService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/expenses")
+@RequestMapping("/api/income")
 @CrossOrigin(origins = "http://localhost:3000")
-public class ExpenseController {
+public class IncomeController {
 
-    private final ExpenseService expenseService;
+    private final IncomeService incomeService;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder encoder;
 
-    public ExpenseController(ExpenseService expenseService,
-                             JwtUtil jwtUtil,
-                             UserRepository userRepository,
-                             BCryptPasswordEncoder encoder) {
-        this.expenseService = expenseService;
+    public IncomeController(IncomeService incomeService,
+                            JwtUtil jwtUtil,
+                            UserRepository userRepository,
+                            BCryptPasswordEncoder encoder) {
+        this.incomeService = incomeService;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.encoder = encoder;
@@ -75,79 +75,76 @@ public class ExpenseController {
         }
     }
 
-    //  ADD EXPENSE
     @PostMapping
-    public ExpenseResponse addExpense(@Valid @RequestBody ExpenseRequest req,
-                                     HttpServletRequest request) {
+    public IncomeResponse addIncome(@Valid @RequestBody IncomeRequest req,
+                                    HttpServletRequest request) {
 
         User user = getUserFromToken(request);
 
-        Expense expense = new Expense();
-        expense.setAmount(req.getAmount());
-        expense.setCategory(req.getCategory());
-        expense.setDescription(req.getDescription());
-        expense.setDate(LocalDate.parse(req.getDate()));
-        expense.setUser(user);
+        Income income = new Income();
+        income.setTitle(req.getTitle());
+        income.setAmount(req.getAmount());
+        income.setSource(req.getSource());
+        income.setDate(LocalDate.parse(req.getDate()));
+        income.setUser(user);
 
-        Expense saved = expenseService.saveExpense(expense);
+        Income saved = incomeService.saveIncome(income);
 
-        return new ExpenseResponse(
+        return new IncomeResponse(
                 saved.getId(),
+                saved.getTitle(),
                 saved.getAmount(),
-                saved.getCategory(),
-                saved.getDescription(),
+                saved.getSource(),
                 saved.getDate()
         );
     }
 
-    //  GET EXPENSES
     @GetMapping
-    public List<ExpenseResponse> getExpenses(HttpServletRequest request) {
+    public List<IncomeResponse> getIncome(HttpServletRequest request) {
 
         User user = getUserFromToken(request);
 
-        return expenseService.getUserExpenses(user)
+        return incomeService.getUserIncome(user)
                 .stream()
-                .map(e -> new ExpenseResponse(
-                        e.getId(),
-                        e.getAmount(),
-                        e.getCategory(),
-                        e.getDescription(),
-                        e.getDate()
+                .map(item -> new IncomeResponse(
+                        item.getId(),
+                        item.getTitle(),
+                        item.getAmount(),
+                        item.getSource(),
+                        item.getDate()
                 ))
                 .collect(Collectors.toList());
     }
 
     @PutMapping("/{id}")
-    public ExpenseResponse updateExpense(@PathVariable Long id,
-                                         @Valid @RequestBody ExpenseRequest req,
-                                         HttpServletRequest request) {
+    public IncomeResponse updateIncome(@PathVariable Long id,
+                                       @Valid @RequestBody IncomeRequest req,
+                                       HttpServletRequest request) {
 
         User user = getUserFromToken(request);
 
-        Expense expense = expenseService.getUserExpenseById(id, user)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
+        Income income = incomeService.getUserIncomeById(id, user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Income not found"));
 
-        expense.setAmount(req.getAmount());
-        expense.setCategory(req.getCategory());
-        expense.setDescription(req.getDescription());
-        expense.setDate(LocalDate.parse(req.getDate()));
+        income.setTitle(req.getTitle());
+        income.setAmount(req.getAmount());
+        income.setSource(req.getSource());
+        income.setDate(LocalDate.parse(req.getDate()));
 
-        Expense updated = expenseService.saveExpense(expense);
+        Income updated = incomeService.saveIncome(income);
 
-        return new ExpenseResponse(
+        return new IncomeResponse(
                 updated.getId(),
+                updated.getTitle(),
                 updated.getAmount(),
-                updated.getCategory(),
-                updated.getDescription(),
+                updated.getSource(),
                 updated.getDate()
         );
     }
 
-    //  DELETE
     @DeleteMapping("/{id}")
-    public String deleteExpense(@PathVariable Long id) {
-        expenseService.deleteExpense(id);
+    public String deleteIncome(@PathVariable Long id) {
+        incomeService.deleteIncome(id);
         return "Deleted Successfully";
     }
 }

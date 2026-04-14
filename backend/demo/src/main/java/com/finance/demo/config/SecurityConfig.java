@@ -17,8 +17,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/expenses/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/auth").permitAll()
+                .requestMatchers("/api/expenses/**", "/api/expenses").permitAll()
+                .requestMatchers("/api/income/**", "/api/income").permitAll()
+                .requestMatchers("/api/budgets/**", "/api/budgets").permitAll()
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(httpBasic -> httpBasic.disable())

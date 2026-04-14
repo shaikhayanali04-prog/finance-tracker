@@ -1,6 +1,7 @@
 package com.finance.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,10 @@ public class ExpenseService {
 
     public List<Expense> getUserExpenses(User user) {
         return expenseRepository.findByUser(user);
+    }
+
+    public Optional<Expense> getUserExpenseById(Long id, User user) {
+        return expenseRepository.findByIdAndUser(id, user);
     }
 
     public void deleteExpense(Long id) {

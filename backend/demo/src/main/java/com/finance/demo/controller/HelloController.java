@@ -8,6 +8,6 @@ public class HelloController {
 
     @GetMapping("/")
     public String home() {
-        return "Finance Tracker Backend Running 🚀";
+        return "Trakify Backend Running";
     }
 }

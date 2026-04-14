@@ -1,0 +1,138 @@
+/* Reconstructed App Components CSS for the Premium Redesign */
+
+/* Alerts */
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 0.95rem 1rem;
+  font-size: 0.95rem;
+}
+.alert-error {
+  background: rgba(225, 29, 72, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+.alert-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Modals */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(12px);
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  z-index: 1000;
+}
+.modal-card {
+  width: min(100%, 34rem);
+  padding: 2rem;
+  position: relative;
+  z-index: 1001;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.modal-header h3 {
+  margin-top: 0.3rem;
+  font-size: 1.5rem;
+  color: #fff;
+}
+.modal-close {
+  border: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  color: #94a3b8;
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: all 0.2s;
+  display: grid;
+  place-items: center;
+}
+.modal-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* Empty States */
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.2);
+}
+.empty-state h3 {
+  color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+/* Premium Glass Tables */
+.table-wrap, .table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  background: rgba(2, 6, 23, 0.6);
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+td {
+  padding: 1rem 1.25rem;
+  color: #f8fafc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.table-actions button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}

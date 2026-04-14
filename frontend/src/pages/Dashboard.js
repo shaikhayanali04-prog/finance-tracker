@@ -1,67 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import ExpenseTable from "../components/ExpenseTable";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
-import SummaryCard from "../components/SummaryCard";
-
-const API_BASE = "http://localhost:8081";
-const AUTH_KEY = "finance-tracker-auth";
-
-const categoryOptions = [
-  "Food",
-  "Transport",
-  "Shopping",
-  "Bills",
-  "Health",
-  "Entertainment",
-  "General",
-];
-
-const getAuthUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
-  } catch {
-    return null;
-  }
-};
-
-const normalizeExpense = (expense) => ({
-  id: expense.id,
-  title: expense.title || expense.description || "Untitled expense",
-  amount: Number(expense.amount || 0),
-  category: expense.category || "General",
-  date: expense.date || "",
-});
 
 function Dashboard() {
-  const user = getAuthUser();
   const [expenses, setExpenses] = useState([]);
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    title: "",
-    amount: "",
-    category: "Food",
-  });
+  const [showModal, setShowModal] = useState(false);
 
+  // Fetch expenses
   const fetchExpenses = async () => {
     try {
-      setLoading(true);
-      setError("");
-      const response = await fetch(`${API_BASE}/api/expenses`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error("Unable to load expenses right now.");
-      }
-
-      setExpenses(Array.isArray(data) ? data.map(normalizeExpense) : []);
-    } catch (requestError) {
-      setError(requestError.message || "Unable to load expenses right now.");
-    } finally {
-      setLoading(false);
+      const res = await fetch("http://localhost:8081/api/expenses");
+      const data = await res.json();
+      setExpenses(data);
+    } catch (err) {
+      console.error(err);
+      alert("Error fetching expenses ❌");
     }
   };
 
@@ -69,214 +23,445 @@ function Dashboard() {
     fetchExpenses();
   }, []);
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
-  };
-
-  const handleAddExpense = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
+  // Add expense
+  const addExpense = async () => {
+    if (!title || !amount) {
+      alert("Enter all fields");
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE}/api/expenses`, {
+      const res = await fetch("http://localhost:8081/api/expenses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          amount: Number(form.amount),
-          category: form.category,
-          description: form.title,
-          date: new Date().toISOString().slice(0, 10),
-        }),
+        body: JSON.stringify({ title, amount: Number(amount) }),
       });
 
-      const responseText = await response.text();
-      if (!response.ok) {
-        throw new Error(responseText || "Unable to add expense.");
+      if (res.ok) {
+        setTitle("");
+        setAmount("");
+        setShowModal(false);
+        fetchExpenses();
       }
-
-      setForm({ title: "", amount: "", category: "Food" });
-      fetchExpenses();
-    } catch (requestError) {
-      setError(requestError.message || "Unable to add expense.");
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error adding expense ❌");
     }
   };
 
-  const handleDeleteExpense = async (expenseId) => {
+  // Delete expense
+  const deleteExpense = async (id) => {
     try {
-      setError("");
-      const response = await fetch(`${API_BASE}/api/expenses/${expenseId}`, {
+      await fetch(`http://localhost:8081/api/expenses/${id}`, {
         method: "DELETE",
       });
-
-      const responseText = await response.text();
-      if (!response.ok) {
-        throw new Error(responseText || "Unable to delete expense.");
-      }
-
-      setExpenses((current) => current.filter((expense) => expense.id !== expenseId));
-    } catch (requestError) {
-      setError(requestError.message || "Unable to delete expense.");
+      fetchExpenses();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting expense ❌");
     }
   };
 
+  // Filtered expenses
   const filteredExpenses = useMemo(() => {
-    const query = search.toLowerCase().trim();
-    if (!query) {
-      return expenses;
-    }
-
-    return expenses.filter((expense) =>
-      [expense.title, expense.category].join(" ").toLowerCase().includes(query)
+    return expenses.filter((e) =>
+      e.title.toLowerCase().includes(search.toLowerCase())
     );
   }, [expenses, search]);
 
-  const recentExpenses = filteredExpenses.slice(0, 5);
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const averageExpense = expenses.length ? Math.round(totalExpenses / expenses.length) : 0;
-  const lastCategory = expenses[0]?.category || "No activity yet";
-  const currencyFormatter = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  });
+  // Total
+  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // Fake income/balance calculations
+  const totalIncome = 50000;
+  const totalBalance = totalIncome - totalExpenses;
+  const avgExpense = expenses.length
+    ? Math.round(totalExpenses / expenses.length)
+    : 0;
+
+  // Month-wise bars (last 6 months demo based on existing data count)
+  const chartData = [40, 65, 55, 85, 45, 70];
 
   return (
-    <div className="app-shell">
-      <Sidebar user={user} />
-
-      <div className="page-shell">
-        <Navbar
-          title={`Hello, ${user?.name || "Finance User"}`}
-          subtitle="Review your latest expenses, add new entries, and keep your spending under control."
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search by title or category"
-          actions={
-            <button type="button" className="button button-primary" onClick={fetchExpenses}>
-              Refresh
-            </button>
-          }
-        />
-
-        {error ? <div className="alert alert-error">{error}</div> : null}
-
-        <div className="summary-grid">
-          <SummaryCard
-            label="Total Expenses"
-            value={currencyFormatter.format(totalExpenses)}
-            helper="Combined spend across all recorded expenses"
-            tone="primary"
-          />
-          <SummaryCard
-            label="Number of Expenses"
-            value={expenses.length}
-            helper="Total expense entries synced from your backend"
-            tone="emerald"
-          />
-          <SummaryCard
-            label="Average Expense"
-            value={currencyFormatter.format(averageExpense)}
-            helper="Average amount per expense"
-            tone="neutral"
-          />
-          <SummaryCard
-            label="Latest Category"
-            value={lastCategory}
-            helper="Most recent spending category on your account"
-            tone="neutral"
-          />
+    <div className="bg-[#f6fafe] text-[#171c1f] min-h-screen font-sans flex">
+      {/* Sidebar */}
+      <aside className="bg-slate-50 h-screen w-72 flex-col sticky top-0 left-0 py-8 px-4 shrink-0 overflow-y-auto border-r border-slate-200 hidden lg:flex">
+        <div className="mb-10 px-4">
+          <h1 className="text-2xl font-black tracking-tight text-[#2E3192]">
+            Trakify
+          </h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Personal Finance Tracker
+          </p>
         </div>
 
-        <div className="content-grid">
-          <section className="panel form-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Add expense</p>
-                <h3>Record a new transaction</h3>
+        <nav className="flex-1 space-y-2">
+          <button className="w-full flex items-center gap-4 px-6 py-3 bg-[#86f2e4] text-[#006f66] rounded-full font-bold text-left">
+            <span className="material-symbols-outlined">dashboard</span>
+            <span>Dashboard</span>
+          </button>
+
+          <button className="w-full flex items-center gap-4 px-6 py-3 text-slate-500 hover:text-[#2E3192] hover:bg-slate-200/50 transition-colors rounded-full font-medium text-left">
+            <span className="material-symbols-outlined">receipt_long</span>
+            <span>Transactions</span>
+          </button>
+
+          <button className="w-full flex items-center gap-4 px-6 py-3 text-slate-500 hover:text-[#2E3192] hover:bg-slate-200/50 transition-colors rounded-full font-medium text-left">
+            <span className="material-symbols-outlined">
+              account_balance_wallet
+            </span>
+            <span>Budgets</span>
+          </button>
+
+          <button className="w-full flex items-center gap-4 px-6 py-3 text-slate-500 hover:text-[#2E3192] hover:bg-slate-200/50 transition-colors rounded-full font-medium text-left">
+            <span className="material-symbols-outlined">settings</span>
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div className="mt-auto pt-6 px-4 space-y-6">
+          <div className="bg-[#363386] p-5 rounded-2xl relative overflow-hidden">
+            <div className="relative z-10">
+              <p className="text-[#a2a0fa] text-xs font-bold mb-2 uppercase tracking-widest">
+                Premium Tier
+              </p>
+              <p className="text-white font-bold text-sm mb-4 leading-snug">
+                Unlock predictive financial insights with AI.
+              </p>
+              <button className="bg-[#86f2e4] text-[#006f66] px-4 py-2 rounded-xl text-xs font-bold w-full">
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 px-2">
+            <img
+              alt="User Avatar"
+              className="w-10 h-10 rounded-full object-cover"
+              src="https://i.pravatar.cc/100?img=12"
+            />
+            <div>
+              <p className="text-sm font-bold">Ayan</p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                Free Member
+              </p>
+            </div>
+          </div>
+
+          <button className="flex items-center gap-4 px-6 py-3 text-slate-500 hover:text-[#2E3192] transition-colors">
+            <span className="material-symbols-outlined">help</span>
+            <span className="text-sm">Help Center</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 overflow-x-hidden flex flex-col">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-center px-4 md:px-8 py-4 sticky top-0 z-40 bg-white/80 backdrop-blur-xl rounded-2xl mt-4 mx-4 md:mx-6 shadow-[0px_24px_48px_rgba(31,26,111,0.06)]">
+          <div className="flex items-center bg-[#f0f4f8] px-4 py-2 rounded-xl w-full md:w-96 border border-slate-200">
+            <span className="material-symbols-outlined text-slate-500 text-xl">
+              search
+            </span>
+            <input
+              className="bg-transparent border-none outline-none text-sm w-full ml-2 placeholder:text-slate-400"
+              placeholder="Search expenses..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f0f4f8] text-[#1f1a6f] hover:bg-slate-200 transition-colors">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f0f4f8] text-[#1f1a6f] hover:bg-slate-200 transition-colors">
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+
+            <div className="h-8 w-px bg-slate-300 mx-2 hidden md:block"></div>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-[#1f1a6f] text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-[#363386] transition-all flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              Add Expense
+            </button>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold"
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="p-4 md:p-8 space-y-8">
+          {/* Welcome */}
+          <section>
+            <h2 className="text-3xl font-extrabold tracking-tight text-[#1f1a6f]">
+              Good morning, Ayan
+            </h2>
+            <p className="text-slate-500 mt-1 font-medium">
+              Your financial health is looking{" "}
+              <span className="text-[#006a61] font-bold">Excellent</span> this month.
+            </p>
+          </section>
+
+          {/* Summary Cards */}
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            {[
+              {
+                title: "Total Balance",
+                amount: `₹${totalBalance}`,
+                extra: "Current available amount",
+                color: "text-[#006a61]",
+                icon: "account_balance_wallet",
+              },
+              {
+                title: "Total Income",
+                amount: `₹${totalIncome}`,
+                extra: "Fixed demo income",
+                color: "text-[#006a61]",
+                icon: "north_east",
+              },
+              {
+                title: "Total Expenses",
+                amount: `₹${totalExpenses}`,
+                extra: `${expenses.length} expenses added`,
+                color: "text-red-500",
+                icon: "south_east",
+              },
+              {
+                title: "Avg Expense",
+                amount: `₹${avgExpense}`,
+                extra: "Average per transaction",
+                color: "text-slate-500",
+                icon: "timer",
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className="bg-white p-6 rounded-[1.5rem] shadow-[0px_24px_48px_rgba(31,26,111,0.06)]"
+              >
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">
+                  {card.title}
+                </p>
+                <p className="text-3xl font-extrabold text-[#1f1a6f] tracking-tight">
+                  {card.amount}
+                </p>
+                <div className={`mt-6 flex items-center gap-2 font-bold text-sm ${card.color}`}>
+                  <span className="material-symbols-outlined text-lg">{card.icon}</span>
+                  <span>{card.extra}</span>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          {/* Analytics + Budget */}
+          <div className="grid grid-cols-12 gap-8">
+            {/* Analytics */}
+            <div className="col-span-12 lg:col-span-8 bg-white p-8 rounded-[1.5rem] shadow-[0px_24px_48px_rgba(31,26,111,0.06)]">
+              <div className="flex justify-between items-center mb-10">
+                <div>
+                  <h3 className="text-xl font-bold text-[#1f1a6f]">
+                    Expense Analytics
+                  </h3>
+                  <p className="text-slate-500 text-sm font-medium">
+                    Visualization of spending flow across last 6 months
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-64 flex items-end gap-3">
+                {chartData.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 flex flex-col items-center gap-2 justify-end h-full"
+                  >
+                    <div
+                      className={`w-full rounded-t-xl ${
+                        i === 3 ? "bg-[#86f2e4]" : "bg-slate-200"
+                      }`}
+                      style={{ height: `${h}%` }}
+                    ></div>
+                    <span
+                      className={`text-[10px] font-bold ${
+                        i === 3 ? "text-[#006a61]" : "text-slate-500"
+                      }`}
+                    >
+                      {["JAN", "FEB", "MAR", "APR", "MAY", "JUN"][i]}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <form className="form-grid" onSubmit={handleAddExpense}>
-              <label className="form-field">
-                <span>Expense title</span>
-                <input
-                  type="text"
-                  name="title"
-                  value={form.title}
-                  onChange={handleFormChange}
-                  placeholder="Groceries, fuel, rent"
-                  required
-                />
-              </label>
+            {/* Budget Status */}
+            <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+              <div className="bg-white p-8 rounded-[1.5rem] shadow-[0px_24px_48px_rgba(31,26,111,0.06)] flex-1">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-[#1f1a6f]">Budget Status</h3>
+                  <button className="text-[#006a61] text-sm font-bold">Manage</button>
+                </div>
 
-              <label className="form-field">
-                <span>Amount</span>
-                <input
-                  type="number"
-                  name="amount"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={handleFormChange}
-                  placeholder="250"
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Category</span>
-                <select name="category" value={form.category} onChange={handleFormChange}>
-                  {categoryOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
+                <div className="space-y-8">
+                  {[
+                    {
+                      name: "Food & Dining",
+                      value: "₹850 / ₹1,200",
+                      width: "70%",
+                      color: "bg-[#006a61]",
+                    },
+                    {
+                      name: "Rent & Utilities",
+                      value: "₹2,100 / ₹2,100",
+                      width: "100%",
+                      color: "bg-[#1f1a6f]",
+                    },
+                    {
+                      name: "Entertainment",
+                      value: "₹120 / ₹500",
+                      width: "24%",
+                      color: "bg-[#22beab]",
+                    },
+                  ].map((item, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-bold">{item.name}</span>
+                        <span className="text-xs text-slate-500">{item.value}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${item.color} rounded-full`}
+                          style={{ width: item.width }}
+                        ></div>
+                      </div>
+                    </div>
                   ))}
-                </select>
-              </label>
+                </div>
+              </div>
+            </div>
+          </div>
 
-              <button type="submit" className="button button-primary button-full" disabled={saving}>
-                {saving ? "Saving expense..." : "Add Expense"}
+          {/* Real Transactions Table */}
+          <section className="bg-white rounded-[1.5rem] shadow-[0px_24px_48px_rgba(31,26,111,0.06)] overflow-hidden">
+            <div className="px-8 py-6 flex justify-between items-center border-b border-slate-200">
+              <h3 className="text-xl font-bold text-[#1f1a6f]">Recent Expenses</h3>
+              <button className="bg-[#f0f4f8] text-[#1f1a6f] px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                Total: {filteredExpenses.length}
               </button>
-            </form>
-          </section>
+            </div>
 
-          <section className="panel accent-panel insight-panel">
-            <p className="eyebrow">Spending health</p>
-            <h3>Keep your finances intentional.</h3>
-            <p>
-              Search through recent activity, review which categories are growing fastest, and trim small leaks before they grow.
-            </p>
-            <ul className="feature-list">
-              <li>Live totals powered by your backend data</li>
-              <li>Recent expense list with instant delete</li>
-              <li>Category-based entry form for cleaner tracking</li>
-            </ul>
+            <div className="overflow-x-auto">
+              {filteredExpenses.length === 0 ? (
+                <p className="p-8 text-slate-500">No expenses found.</p>
+              ) : (
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+                      <th className="px-8 py-4">Title</th>
+                      <th className="px-8 py-4">Category</th>
+                      <th className="px-8 py-4">Date</th>
+                      <th className="px-8 py-4">Status</th>
+                      <th className="px-8 py-4 text-right">Amount</th>
+                      <th className="px-8 py-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredExpenses.map((e) => (
+                      <tr key={e.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-5 font-bold">{e.title}</td>
+                        <td className="px-8 py-5">Expense</td>
+                        <td className="px-8 py-5 text-slate-500">
+                          {new Date().toLocaleDateString()}
+                        </td>
+                        <td className="px-8 py-5">
+                          <span className="text-xs font-bold text-[#006a61]">
+                            Completed
+                          </span>
+                        </td>
+                        <td className="px-8 py-5 text-right font-extrabold text-[#1f1a6f]">
+                          -₹{e.amount}
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <button
+                            onClick={() => deleteExpense(e.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-red-600"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </section>
         </div>
 
-        <section className="panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Recent activity</p>
-              <h3>Latest transactions</h3>
-            </div>
-            <span className="panel-badge">{filteredExpenses.length} visible</span>
-          </div>
+        {/* Footer */}
+        <footer className="mt-auto p-8 text-center text-slate-500 text-xs font-medium">
+          © 2026 Trakify Financial Systems
+        </footer>
+      </main>
 
-          <ExpenseTable
-            expenses={recentExpenses}
-            loading={loading}
-            onDelete={handleDeleteExpense}
-            emptyMessage="No recent expenses match your search yet."
-          />
-        </section>
-      </div>
+      {/* Floating Add Button */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed bottom-10 right-10 w-16 h-16 bg-[#1f1a6f] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-all z-50"
+      >
+        <span className="material-symbols-outlined text-3xl">add</span>
+      </button>
+
+      {/* Add Expense Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] px-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[#1f1a6f]">Add Expense</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-500 hover:text-black"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Expense title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#1f1a6f]"
+              />
+
+              <input
+                type="number"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-[#1f1a6f]"
+              />
+
+              <button
+                onClick={addExpense}
+                className="w-full bg-[#1f1a6f] text-white py-3 rounded-xl font-bold hover:bg-[#363386]"
+              >
+                Save Expense
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
